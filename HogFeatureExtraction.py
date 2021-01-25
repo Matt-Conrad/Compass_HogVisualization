@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 import os
-from ctypes import cdll, c_byte, c_float, c_uint8, c_int
-lib = cdll.LoadLibrary("./HogVis.dll")
+from ctypes import cdll, c_void_p
+lib = cdll.LoadLibrary("C:\\Users\\mconrad2\\Documents\\Compass_HogVisualization\\HogVis.dll")
 
 class HogVisual(object):
     def __init__(self):
@@ -51,30 +51,14 @@ for filename in os.listdir(imageDir):
     img_desc = np.asarray(descriptor[0:1764])
 
     # Prepare planes for input
-    oneRow = c_byte * 64
-    aSlice = oneRow * 64
-    slice1 = aSlice()
-    slice2 = aSlice()
-    slice3 = aSlice()
-    plane1 = cv2.split(small_img)[0]
-    plane2 = cv2.split(small_img)[1]
-    plane3 = cv2.split(small_img)[2]
+    plane1 = c_void_p(cv2.split(small_img)[0].ctypes.data)
+    plane2 = c_void_p(cv2.split(small_img)[1].ctypes.data)
+    plane3 = c_void_p(cv2.split(small_img)[2].ctypes.data)
 
-    # Copy the R, B, & G planes to C-acceptable arrays
-    for ind1 in range(0,64):
-        for ind2 in range(0,64):
-            slice1[ind1][ind2] = plane1[ind1][ind2] 
-            slice2[ind1][ind2] = plane2[ind1][ind2]  
-            slice3[ind1][ind2] = plane3[ind1][ind2]
-
-    # Prepare descriptor for input
-    featureVecType = c_float * 1764
-    featureVec = featureVecType()
-    for ind in range(0,1764):
-        featureVec[ind] = descriptor[ind]
+    featureVec = c_void_p(descriptor.ctypes.data)
 
     h = HogVisual()
-    h.visualize(slice1,slice2,slice3,featureVec)
+    h.visualize(plane1,plane2,plane3,featureVec)
     # h.test()
 
     # Add to the array to be saved
